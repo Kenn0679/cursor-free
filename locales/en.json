@@ -36,7 +36,8 @@
         "language_config_saved": "Language configuration saved successfully",
         "lang_invalid_choice": "Invalid choice. Please enter one of the following options: ({lang_choices})",
         "restore_machine_id": "Restore Machine ID from Backup",
-        "manual_custom_auth": "Manual Custom Auth"
+        "manual_custom_auth": "Manual Custom Auth",
+        "account_info_error": "Account info temporarily unavailable"
     },
     "languages": {
         "ar": "Arabic",

@@ -214,23 +214,51 @@ class OAuthHandler:
             co = self._configure_browser_options(browser_path, user_data_dir, self.selected_profile)
             
             print(f"{Fore.CYAN}{EMOJI['INFO']} {self.translator.get('oauth.starting_browser', path=browser_path) if self.translator else f'Starting browser at: {browser_path}'}{Style.RESET_ALL}")
-            self.browser = ChromiumPage(co)
-            
-            # Verify browser launched successfully
-            if not self.browser:
-                raise Exception(f"{self.translator.get('oauth.browser_failed_to_start', error=str(e)) if self.translator else 'Failed to initialize browser instance'}")
-            
-            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('oauth.browser_setup_completed') if self.translator else 'Browser setup completed successfully'}{Style.RESET_ALL}")
-            return True
+            try:
+                self.browser = ChromiumPage(co)
+                
+                # Wait a moment for browser to initialize
+                time.sleep(2)
+                
+                # Test browser connection
+                try:
+                    self.browser.get("about:blank")
+                    print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('oauth.browser_setup_completed') if self.translator else 'Browser setup completed successfully'}{Style.RESET_ALL}")
+                    return True
+                except Exception as e:
+                    raise Exception(f"Browser connection test failed: {str(e)}")
+                    
+            except Exception as browser_error:
+                error_msg = str(browser_error)
+                print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('oauth.browser_setup_failed', error=error_msg) if self.translator else f'Browser setup failed: {error_msg}'}{Style.RESET_ALL}")
+                
+                # Provide specific solutions based on error type
+                if "connection fails" in error_msg or "127.0.0.1:9222" in error_msg:
+                    print(f"{Fore.YELLOW}{EMOJI['INFO']} {self.translator.get('oauth.browser_port_issue') if self.translator else 'Browser port issue detected'}{Style.RESET_ALL}")
+                    print(f"{Fore.CYAN}💡 Solutions:{Style.RESET_ALL}")
+                    print(f"   1. Close all browser windows completely")
+                    print(f"   2. Try using Chrome instead of Opera GX")
+                    print(f"   3. Run: python fix_browser.py")
+                    print(f"   4. Restart your computer if problem persists")
+                elif "DevToolsActivePort file doesn't exist" in error_msg:
+                    print(f"{Fore.YELLOW}{EMOJI['INFO']} {self.translator.get('oauth.try_running_without_sudo_admin') if self.translator else 'Try running without sudo/administrator privileges'}{Style.RESET_ALL}")
+                elif "Chrome failed to start" in error_msg or "failed to start" in error_msg:
+                    print(f"{Fore.YELLOW}{EMOJI['INFO']} {self.translator.get('oauth.make_sure_chrome_chromium_is_properly_installed') if self.translator else 'Make sure Chrome/Chromium is properly installed'}{Style.RESET_ALL}")
+                    if platform_name == 'linux':
+                        print(f"{Fore.YELLOW}{EMOJI['INFO']} {self.translator.get('oauth.try_install_chromium') if self.translator else 'Try: sudo apt install chromium-browser'}{Style.RESET_ALL}")
+                
+                raise browser_error
             
         except Exception as e:
-            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('oauth.browser_setup_failed', error=str(e)) if self.translator else f'Browser setup failed: {str(e)}'}{Style.RESET_ALL}")
-            if "DevToolsActivePort file doesn't exist" in str(e):
-                print(f"{Fore.YELLOW}{EMOJI['INFO']} {self.translator.get('oauth.try_running_without_sudo_admin') if self.translator else 'Try running without sudo/administrator privileges'}{Style.RESET_ALL}")
-            elif "Chrome failed to start" in str(e):
-                print(f"{Fore.YELLOW}{EMOJI['INFO']} {self.translator.get('oauth.make_sure_chrome_chromium_is_properly_installed') if self.translator else 'Make sure Chrome/Chromium is properly installed'}{Style.RESET_ALL}")
-                if platform_name == 'linux':
-                    print(f"{Fore.YELLOW}{EMOJI['INFO']} {self.translator.get('oauth.try_install_chromium') if self.translator else 'Try: sudo apt install chromium-browser'}{Style.RESET_ALL}")
+            error_msg = str(e)
+            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('oauth.browser_setup_failed', error=error_msg) if self.translator else f'Browser setup failed: {error_msg}'}{Style.RESET_ALL}")
+            
+            # Additional help for common issues
+            print(f"\n{Fore.CYAN}🔧 Quick Fix Suggestions:{Style.RESET_ALL}")
+            print(f"   • Run: python fix_browser.py")
+            print(f"   • Make sure Chrome is installed")
+            print(f"   • Close all browser windows before trying again")
+            
             return False
 
     def _kill_browser_processes(self):
